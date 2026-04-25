@@ -1,1 +1,1099 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WaveCAD — تصميم أسنان احترافي عن بُعد | ادفع لكل Case</title>
+    <meta name="description" content="منصة WaveCAD لتصميم الأسنان الرقمي عن بُعد. تيجان، جسور، تيجان زرعات، تصميم الابتسامة. ادفع فقط على كل Case بدون أي رسوم شهرية.">
+    <meta property="og:title" content="WaveCAD — التصميم الرقمي للأسنان بدقة عالية">
+    <meta property="og:description" content="ارفع Case واستلم تصميمك خلال 24 ساعة. دقة ميلينج، دعم Exocad و CBCT، دفع لكل وحدة فقط.">
+    <meta property="og:type" content="website">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink:    #020712;
+            --ink2:   #060F1F;
+            --ink3:   #0B1A33;
+            --amber:  #0077B6;
+            --amber2: #005A8E;
+            --amber3: rgba(0,119,182,0.1);
+            --violet: #6C5CE7;
+            --violet2:#5A4BD1;
+            --rose:   #00B4D8;
+            --white:  #F0F8FF;
+            --gray:   #6B7A99;
+            --lgray:  #8B9AB8;
+            --radius: 24px;
+        }
 
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
+        body {
+            font-family:'Cairo',sans-serif;
+            background:var(--ink);
+            color:var(--white);
+            overflow-x:hidden;
+            cursor:none;
+        }
+
+        .cursor {
+            position:fixed;
+            width:12px;
+            height:12px;
+            background:var(--amber);
+            border-radius:50%;
+            pointer-events:none;
+            z-index:10000;
+            mix-blend-mode: difference;
+        }
+        .cursor-ring {
+            position:fixed;
+            width:38px;
+            height:38px;
+            border:1px solid rgba(0,119,182,0.5);
+            border-radius:50%;
+            pointer-events:none;
+            z-index:9999;
+        }
+        @media (pointer: coarse) {
+            body { cursor:auto; }
+            .cursor, .cursor-ring { display:none; }
+        }
+
+        .bg-layer {
+            position:fixed;
+            inset:0;
+            z-index:0;
+            pointer-events:none;
+        }
+        .noise {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+            opacity:0.25;
+        }
+        .mesh {
+            background:
+                radial-gradient(ellipse 70% 50% at 80% 5%, rgba(0,119,182,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 70% at 5%  90%, rgba(0,180,216,0.05) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 40% at 50% 50%, rgba(108,92,231,0.03) 0%, transparent 70%),
+                var(--ink);
+        }
+        #particlesCanvas {
+            position:fixed;
+            inset:0;
+            z-index:0;
+            opacity:0.3;
+            pointer-events:none;
+        }
+
+        nav {
+            position:fixed;
+            top:0; left:0; right:0;
+            z-index:100;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding:18px 60px;
+            background:rgba(2,7,18,0.8);
+            backdrop-filter:blur(24px);
+            border-bottom:1px solid rgba(0,119,182,0.12);
+            transition:all 0.4s;
+        }
+        nav.scrolled {
+            padding:12px 60px;
+            background:rgba(2,7,18,0.96);
+        }
+        .logo {
+            display:flex;
+            align-items:center;
+            gap:10px;
+            text-decoration:none;
+        }
+        .logo-mark {
+            width:42px; height:42px;
+        }
+        .logo-mark svg { width:100%; height:100%; }
+        .logo-text {
+            font-family:'Tajawal',sans-serif;
+            font-size:24px;
+            font-weight:900;
+            color:var(--white);
+            letter-spacing:-0.5px;
+        }
+        .logo-text span { color:var(--rose); }
+
+        .nav-links {
+            display:flex;
+            gap:36px;
+            list-style:none;
+        }
+        .nav-links a {
+            color:var(--gray);
+            text-decoration:none;
+            font-size:14px;
+            font-weight:600;
+            position:relative;
+            transition:color 0.3s;
+        }
+        .nav-links a::after {
+            content:'';
+            position:absolute;
+            bottom:-4px;
+            left:0; right:0;
+            height:1px;
+            background:var(--amber);
+            transform:scaleX(0);
+            transition:transform 0.3s;
+            transform-origin:right;
+        }
+        .nav-links a:hover { color:var(--amber); }
+        .nav-links a:hover::after { transform:scaleX(1); transform-origin:left; }
+
+        .nav-cta {
+            display:flex;
+            align-items:center;
+            gap:12px;
+        }
+        .btn-ng {
+            padding:10px 22px;
+            border:1px solid rgba(0,119,182,0.2);
+            border-radius:8px;
+            color:var(--lgray);
+            background:transparent;
+            font-family:'Cairo',sans-serif;
+            font-size:13px;
+            font-weight:600;
+            cursor:pointer;
+            transition:all 0.3s;
+        }
+        .btn-ng:hover { border-color:var(--amber); color:var(--amber); }
+        .btn-na {
+            padding:10px 22px;
+            border:none;
+            background:linear-gradient(135deg,var(--amber),var(--amber2));
+            border-radius:8px;
+            color:var(--white);
+            font-family:'Cairo',sans-serif;
+            font-size:13px;
+            font-weight:800;
+            cursor:pointer;
+            transition:all 0.3s;
+            box-shadow:0 0 20px rgba(0,119,182,0.25);
+        }
+        .btn-na:hover { transform:translateY(-1px); box-shadow:0 0 32px rgba(0,119,182,0.4); }
+
+        .hamburger {
+            display:none;
+            flex-direction:column;
+            gap:5px;
+            background:none;
+            border:none;
+            cursor:pointer;
+            z-index:101;
+        }
+        .hamburger span {
+            width:26px;
+            height:2px;
+            background:var(--white);
+            transition:all 0.3s;
+        }
+        .hamburger.active span:nth-child(1) { transform:rotate(45deg) translate(5px,5px); }
+        .hamburger.active span:nth-child(2) { opacity:0; }
+        .hamburger.active span:nth-child(3) { transform:rotate(-45deg) translate(5px,-5px); }
+
+        @media(max-width:1024px) {
+            .nav-links, .nav-cta { display:none; }
+            .hamburger { display:flex; }
+            nav { padding:16px 24px; }
+            .mobile-menu {
+                position:fixed;
+                top:0; right:-100%;
+                width:75%;
+                height:100vh;
+                background:rgba(2,7,18,0.98);
+                backdrop-filter:blur(30px);
+                flex-direction:column;
+                justify-content:center;
+                align-items:center;
+                gap:28px;
+                transition:right 0.4s ease;
+                z-index:99;
+                display:flex;
+                border-left:1px solid rgba(0,119,182,0.15);
+            }
+            .mobile-menu.active { right:0; }
+            .mobile-menu a {
+                color:var(--white);
+                font-size:20px;
+                font-weight:700;
+                text-decoration:none;
+            }
+        }
+
+        .hero {
+            position:relative;
+            z-index:2;
+            min-height:100vh;
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            align-items:center;
+            padding:130px 60px 80px;
+            gap:60px;
+        }
+        .hero-eyebrow {
+            display:inline-flex;
+            align-items:center;
+            gap:10px;
+            background:rgba(0,119,182,0.07);
+            border:1px solid rgba(0,119,182,0.2);
+            border-radius:100px;
+            padding:8px 20px;
+            margin-bottom:30px;
+        }
+        .ep {
+            width:8px; height:8px;
+            background:var(--amber);
+            border-radius:50%;
+            box-shadow:0 0 0 0 rgba(0,119,182,0.5);
+            animation:sonar 2s infinite;
+        }
+        @keyframes sonar {
+            0% { box-shadow:0 0 0 0 rgba(0,119,182,0.5); }
+            70% { box-shadow:0 0 0 10px rgba(0,119,182,0); }
+            100% { box-shadow:0 0 0 0 rgba(0,119,182,0); }
+        }
+        .et {
+            font-size:12px;
+            color:var(--amber);
+            font-weight:700;
+            letter-spacing:1px;
+        }
+        .hero-h1 {
+            font-family:'Tajawal',sans-serif;
+            font-size:68px;
+            font-weight:900;
+            line-height:1.1;
+            margin-bottom:26px;
+            letter-spacing:-2px;
+        }
+        .h1-grad {
+            background:linear-gradient(90deg,var(--amber),var(--rose));
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+        }
+        .h1-dim { color:rgba(240,248,255,0.35); font-weight:300; }
+
+        .hero-desc {
+            font-size:17px;
+            color:var(--lgray);
+            line-height:1.9;
+            margin-bottom:42px;
+            max-width:500px;
+        }
+        .hero-acts {
+            display:flex;
+            gap:16px;
+            align-items:center;
+            margin-bottom:54px;
+            flex-wrap:wrap;
+        }
+        .btn-hm {
+            padding:16px 38px;
+            border:none;
+            background:linear-gradient(135deg,var(--amber),var(--amber2));
+            border-radius:12px;
+            color:var(--white);
+            font-family:'Cairo',sans-serif;
+            font-size:16px;
+            font-weight:800;
+            cursor:pointer;
+            transition:all 0.4s;
+            box-shadow:0 8px 32px rgba(0,119,182,0.25);
+            position:relative;
+            overflow:hidden;
+        }
+        .btn-hm::before {
+            content:'';
+            position:absolute;
+            inset:0;
+            background:linear-gradient(135deg,rgba(255,255,255,0.15),transparent);
+            opacity:0;
+            transition:opacity 0.3s;
+        }
+        .btn-hm:hover { transform:translateY(-3px); box-shadow:0 20px 48px rgba(0,119,182,0.4); }
+        .btn-hm:hover::before { opacity:1; }
+        .btn-hg {
+            padding:16px 38px;
+            border:1px solid rgba(240,248,255,0.13);
+            border-radius:12px;
+            color:var(--white);
+            background:transparent;
+            font-family:'Cairo',sans-serif;
+            font-size:16px;
+            font-weight:700;
+            cursor:pointer;
+            transition:all 0.3s;
+        }
+        .btn-hg:hover { border-color:var(--amber); color:var(--amber); }
+
+        .hero-nums {
+            display:flex;
+            gap:42px;
+        }
+        .hn-val {
+            font-family:'Tajawal',sans-serif;
+            font-size:34px;
+            font-weight:900;
+            color:var(--white);
+        }
+        .hn-val span { color:var(--amber); }
+        .hn-label {
+            font-size:12px;
+            color:var(--gray);
+            margin-top:2px;
+            font-weight:500;
+        }
+
+        .hero-right {
+            position:relative;
+            height:100%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+        }
+        #toothCanvas {
+            position:absolute;
+            inset:0;
+            z-index:1;
+            pointer-events:none;
+        }
+        .floating-cards {
+            position:relative;
+            z-index:2;
+            pointer-events:none;
+        }
+        .mini-card {
+            position:absolute;
+            background:rgba(6,15,31,0.92);
+            border:1px solid rgba(0,119,182,0.25);
+            border-radius:16px;
+            padding:14px 18px;
+            backdrop-filter:blur(20px);
+            font-size:12px;
+            pointer-events:auto;
+        }
+        .mc1 { top:-80px; left:-30px; animation:mf1 5s ease-in-out infinite; }
+        .mc2 { bottom:-30px; left:10px; animation:mf2 6s ease-in-out infinite; }
+        @keyframes mf1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+        @keyframes mf2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(10px)} }
+        .mc-top { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+        .mc-ico { font-size:18px; }
+        .mc-val { font-family:'Tajawal',sans-serif; font-size:22px; font-weight:800; }
+        .main-card {
+            background:rgba(0,119,182,0.04);
+            border:1px solid rgba(0,119,182,0.2);
+            border-radius:var(--radius);
+            padding:28px;
+            backdrop-filter:blur(20px);
+            pointer-events:auto;
+            transform-style:preserve-3d;
+        }
+        .ct { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+        .cb { font-family:'Tajawal',sans-serif; font-size:18px; font-weight:800; color:var(--amber); }
+        .lt { display:flex; align-items:center; gap:6px; background:rgba(0,119,182,0.1); border:1px solid rgba(0,119,182,0.2); border-radius:100px; padding:5px 12px; font-size:11px; font-weight:700; color:var(--amber); }
+        .ld { width:6px; height:6px; background:var(--amber); border-radius:50%; animation:sonar 2s infinite; }
+        .oi { display:flex; align-items:center; gap:13px; padding:13px; border-radius:13px; margin-bottom:9px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); transition:all 0.3s; }
+        .oi:hover { background:rgba(0,119,182,0.06); border-color:rgba(0,119,182,0.2); }
+        .oic { width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+        .oic-a { background:rgba(0,119,182,0.12); }
+        .oic-v { background:rgba(108,92,231,0.12); }
+        .oic-r { background:rgba(0,180,216,0.12); }
+        .oin { font-size:13px; font-weight:700; }
+        .oit { font-size:11px; color:var(--gray); margin-top:2px; }
+        .oib { font-size:11px; font-weight:700; padding:4px 10px; border-radius:100px; }
+        .ib-a { background:rgba(0,119,182,0.12); color:var(--amber); }
+        .ib-v { background:rgba(108,92,231,0.12); color:#8B7CF6; }
+        .ib-r { background:rgba(0,180,216,0.12); color:var(--rose); }
+        .oip { font-size:13px; font-weight:800; color:var(--amber); min-width:52px; text-align:left; }
+        .cfoot { display:flex; justify-content:space-between; align-items:center; margin-top:18px; padding-top:18px; border-top:1px solid rgba(0,119,182,0.12); }
+        .cfe { font-size:12px; color:var(--gray); }
+        .cfa { font-family:'Tajawal',sans-serif; font-size:24px; font-weight:900; color:var(--amber); }
+
+        @media(max-width:1024px) {
+            .hero { grid-template-columns:1fr; padding:120px 24px 80px; }
+            .hero-right { display:none; }
+            .hero-h1 { font-size:46px; }
+        }
+
+        section { position:relative; z-index:2; padding:100px 60px; }
+        .sec-tag {
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            font-size:11px;
+            font-weight:800;
+            color:var(--amber);
+            letter-spacing:3px;
+            text-transform:uppercase;
+            margin-bottom:14px;
+        }
+        .sec-tag::before { content:''; width:24px; height:1px; background:var(--amber); }
+        .sec-title {
+            font-family:'Tajawal',sans-serif;
+            font-size:44px;
+            font-weight:900;
+            letter-spacing:-1px;
+            margin-bottom:12px;
+        }
+        .sec-sub {
+            font-size:16px;
+            color:var(--gray);
+            max-width:440px;
+            line-height:1.8;
+            margin-bottom:56px;
+        }
+        .srv-grid {
+            display:grid;
+            grid-template-columns:repeat(3,1fr);
+            gap:2px;
+            border:1px solid rgba(0,119,182,0.12);
+            border-radius:var(--radius);
+            overflow:hidden;
+        }
+        .sc {
+            background:var(--ink2);
+            padding:38px 34px;
+            position:relative;
+            overflow:hidden;
+            transition:all 0.4s;
+            cursor:pointer;
+        }
+        .sc::before {
+            content:'';
+            position:absolute;
+            inset:0;
+            background:linear-gradient(135deg,rgba(0,119,182,0.06),transparent);
+            opacity:0;
+            transition:opacity 0.4s;
+        }
+        .sc:hover { background:var(--ink3); }
+        .sc:hover::before { opacity:1; }
+        .sc-num { font-family:'Tajawal',sans-serif; font-size:12px; font-weight:800; color:rgba(0,119,182,0.25); margin-bottom:22px; letter-spacing:2px; }
+        .sc-ico { font-size:38px; margin-bottom:18px; display:block; }
+        .sc-name { font-size:19px; font-weight:800; margin-bottom:9px; }
+        .sc-desc { font-size:13px; color:var(--gray); line-height:1.8; margin-bottom:26px; }
+        .sc-bot { display:flex; justify-content:space-between; align-items:center; }
+        .sc-price { font-family:'Tajawal',sans-serif; font-size:27px; font-weight:900; color:var(--amber); }
+        .sc-price small { font-size:12px; color:var(--gray); font-family:'Cairo',sans-serif; }
+        .sa {
+            width:34px; height:34px;
+            border:1px solid rgba(0,119,182,0.2);
+            border-radius:50%;
+            display:flex; align-items:center; justify-content:center;
+            color:var(--amber); font-size:15px;
+            transition:transform 0.3s;
+        }
+        .sc:hover .sa { transform:translateX(-5px); }
+
+        @media(max-width:900px) {
+            .srv-grid { grid-template-columns:1fr; }
+            section { padding:80px 24px; }
+        }
+
+        .how { background:var(--ink2); }
+        .how-grid {
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:80px;
+            align-items:center;
+            margin-top:60px;
+        }
+        .hs {
+            display:flex;
+            gap:22px;
+            padding:26px 0;
+            border-bottom:1px solid rgba(255,255,255,0.04);
+            transition:all 0.3s;
+            cursor:pointer;
+        }
+        .hs:last-child { border:none; }
+        .hs:hover .hsn { background:var(--amber); color:var(--ink); border-color:var(--amber); }
+        .hsn {
+            width:46px; height:46px;
+            border-radius:13px;
+            flex-shrink:0;
+            background:transparent;
+            border:1px solid rgba(0,119,182,0.2);
+            display:flex; align-items:center; justify-content:center;
+            font-family:'Tajawal',sans-serif;
+            font-size:18px; font-weight:900;
+            color:var(--amber);
+            transition:all 0.3s;
+        }
+        .hst { font-size:17px; font-weight:800; margin-bottom:6px; }
+        .hsd { font-size:13px; color:var(--gray); line-height:1.7; }
+        .how-vis {
+            background:rgba(0,119,182,0.03);
+            border:1px solid rgba(0,119,182,0.15);
+            border-radius:var(--radius);
+            padding:30px;
+            position:relative;
+        }
+        .tl-lbl { font-size:12px; font-weight:800; color:var(--lgray); margin-bottom:22px; letter-spacing:1px; }
+        .tli { display:flex; gap:14px; margin-bottom:18px; }
+        .tldw { display:flex; flex-direction:column; align-items:center; }
+        .tld { width:11px; height:11px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+        .td-a { background:var(--amber); box-shadow:0 0 10px rgba(0,119,182,0.5); }
+        .td-v { background:var(--violet); box-shadow:0 0 10px rgba(108,92,231,0.5); }
+        .td-r { background:var(--rose); }
+        .td-g { background:var(--gray); }
+        .tll { width:1px; flex:1; background:rgba(255,255,255,0.06); min-height:18px; margin:4px 0; }
+        .tlc { flex:1; }
+        .tlct { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; }
+        .tlcti { font-size:14px; font-weight:700; }
+        .tlctm { font-size:11px; color:var(--gray); }
+        @media(max-width:900px) { .how-grid { grid-template-columns:1fr; } }
+
+        .price-grid {
+            display:grid;
+            grid-template-columns:repeat(3,1fr);
+            gap:22px;
+            margin-top:60px;
+        }
+        .pc {
+            background:var(--ink2);
+            border:1px solid rgba(255,255,255,0.06);
+            border-radius:var(--radius);
+            padding:38px;
+            transition:all 0.4s;
+        }
+        .pc:hover { transform:translateY(-5px); border-color:rgba(0,119,182,0.2); }
+        .pc-feat {
+            background:linear-gradient(145deg,rgba(0,119,182,0.07),rgba(0,119,182,0.02));
+            border-color:rgba(0,119,182,0.3);
+        }
+        .pc-feat::before {
+            content:'';
+            position:absolute;
+            top:0; left:0; right:0;
+            height:2px;
+            background:linear-gradient(90deg,var(--amber),var(--rose));
+        }
+        .pc-ico { font-size:36px; margin-bottom:20px; display:block; }
+        .pc-name { font-size:20px; font-weight:800; margin-bottom:8px; }
+        .pc-desc { font-size:14px; color:var(--gray); line-height:1.7; margin-bottom:24px; }
+        .pc-price-row { display:flex; align-items:baseline; gap:8px; margin-bottom:6px; }
+        .pc-price { font-family:'Tajawal',sans-serif; font-size:46px; font-weight:900; color:var(--white); line-height:1; }
+        .pc-price sub { font-size:16px; color:var(--gray); font-family:'Cairo',sans-serif; }
+        .pc-note { font-size:12px; color:var(--gray); margin-bottom:26px; }
+        .pc-div { height:1px; background:rgba(255,255,255,0.05); margin-bottom:26px; }
+        .pc-fl { list-style:none; margin-bottom:34px; }
+        .pc-fl li { display:flex; align-items:center; gap:10px; font-size:14px; padding:9px 0; border-bottom:1px solid rgba(255,255,255,0.03); }
+        .pc-fl li:last-child { border:none; }
+        .pfc { color:var(--amber); font-size:14px; font-weight:800; }
+        .btn-pc {
+            width:100%;
+            padding:15px;
+            border-radius:12px;
+            font-family:'Cairo',sans-serif;
+            font-size:15px;
+            font-weight:800;
+            cursor:pointer;
+            transition:all 0.3s;
+        }
+        .btn-pca {
+            background:linear-gradient(135deg,var(--amber),var(--amber2));
+            color:var(--white);
+            border:none;
+            box-shadow:0 8px 24px rgba(0,119,182,0.2);
+        }
+        .btn-pca:hover { box-shadow:0 12px 36px rgba(0,119,182,0.35); }
+        .btn-pcg {
+            background:transparent;
+            color:var(--white);
+            border:1px solid rgba(255,255,255,0.1);
+        }
+        .btn-pcg:hover { border-color:var(--amber); color:var(--amber); }
+        @media(max-width:900px) { .price-grid { grid-template-columns:1fr; } }
+
+        .cta-sec {
+            margin:0 60px 100px;
+            background:linear-gradient(135deg,rgba(0,119,182,0.08),rgba(108,92,231,0.04));
+            border:1px solid rgba(0,119,182,0.18);
+            border-radius:32px;
+            padding:80px;
+            text-align:center;
+            position:relative;
+            overflow:hidden;
+        }
+        .cta-sec::before {
+            content:'';
+            position:absolute;
+            top:0; left:0; right:0;
+            height:1px;
+            background:linear-gradient(90deg,transparent,var(--amber),transparent);
+        }
+        .cta-h {
+            font-family:'Tajawal',sans-serif;
+            font-size:50px;
+            font-weight:900;
+            letter-spacing:-2px;
+            margin-bottom:18px;
+        }
+        .cta-sub { font-size:17px; color:var(--lgray); margin-bottom:42px; }
+        .cta-btns { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; }
+        @media(max-width:600px) {
+            .cta-sec { margin:0 24px 80px; padding:48px 24px; }
+        }
+
+        footer {
+            background:var(--ink2);
+            border-top:1px solid rgba(0,119,182,0.1);
+            padding:62px 60px 38px;
+        }
+        .ft {
+            display:grid;
+            grid-template-columns:2fr 1fr 1fr 1fr;
+            gap:60px;
+            margin-bottom:56px;
+        }
+        .fb p { font-size:14px; color:var(--gray); line-height:1.8; max-width:280px; margin-top:14px; }
+        .fc h4 { font-size:12px; font-weight:800; color:var(--lgray); margin-bottom:18px; letter-spacing:1px; }
+        .fc a { display:block; font-size:14px; color:var(--gray); text-decoration:none; margin-bottom:10px; transition:color 0.3s; }
+        .fc a:hover { color:var(--amber); }
+        .fb2 { display:flex; justify-content:space-between; align-items:center; padding-top:28px; border-top:1px solid rgba(255,255,255,0.03); }
+        .fcp { font-size:12px; color:rgba(107,122,153,0.5); }
+        .fw { font-family:'Tajawal',sans-serif; font-size:14px; font-weight:800; color:var(--amber); }
+        @media(max-width:800px) {
+            .ft { grid-template-columns:1fr 1fr; gap:36px; }
+            footer { padding:50px 24px 30px; }
+        }
+
+        .reveal {
+            opacity:0;
+            transform:translateY(40px);
+            transition:all 0.8s cubic-bezier(0.16,1,0.3,1);
+        }
+        .reveal.visible { opacity:1; transform:translateY(0); }
+        .d1 { transition-delay:0.1s; } .d2 { transition-delay:0.2s; } .d3 { transition-delay:0.3s; } .d4 { transition-delay:0.4s; }
+    </style>
+</head>
+<body>
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-ring" id="cursorRing"></div>
+
+    <div class="bg-layer noise"></div>
+    <div class="bg-layer mesh"></div>
+    <canvas id="particlesCanvas"></canvas>
+
+    <nav id="navbar">
+        <a href="#" class="logo">
+            <div class="logo-mark">
+                <!-- لوقو Minimal W — الخيار 4 -->
+                <svg viewBox="0 0 44 44" fill="none">
+                    <rect width="44" height="44" rx="12" fill="rgba(0,119,182,0.06)"/>
+                    <rect width="44" height="44" rx="12" stroke="rgba(0,119,182,0.2)" stroke-width="1"/>
+                    <path d="M10 14 L16 28 L22 19 L28 28 L34 14" stroke="url(#waveGrad4)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <circle cx="22" cy="28" r="2" fill="#00B4D8"/>
+                    <defs>
+                        <linearGradient id="waveGrad4" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#0077B6"/>
+                            <stop offset="100%" stop-color="#6C5CE7"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <div class="logo-text">Wave<span>CAD</span></div>
+        </a>
+        <ul class="nav-links">
+            <li><a href="#services">الخدمات</a></li>
+            <li><a href="#how">كيف يعمل</a></li>
+            <li><a href="#pricing">الأسعار</a></li>
+            <li><a href="#contact">تواصل</a></li>
+        </ul>
+        <div class="nav-cta">
+            <button class="btn-ng">تسجيل دخول</button>
+            <button class="btn-na">ارفع Case ←</button>
+        </div>
+        <button class="hamburger" id="hamburger" aria-label="القائمة">
+            <span></span><span></span><span></span>
+        </button>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#services">الخدمات</a>
+        <a href="#how">كيف يعمل</a>
+        <a href="#pricing">الأسعار</a>
+        <a href="#contact">تواصل</a>
+    </div>
+
+    <section class="hero">
+        <div>
+            <div class="hero-eyebrow reveal"><div class="ep"></div><span class="et">تصميم أسنان احترافي · السعودية</span></div>
+            <h1 class="hero-h1 reveal d1">
+                تصميم<br>
+                <span class="h1-grad">في 24 ساعة</span><br>
+                <span class="h1-dim">بدقة لا تُضاهى</span>
+            </h1>
+            <p class="hero-desc reveal d2">ارفع Case الآن واستلم تصميمك غداً. متخصصون في exocad — تيجان، جسور، Smile Design، Implant Crowns. ادفع فقط على التصميم اللي تحتاجه، لا التزامات ولا رسوم شهرية.</p>
+            <div class="hero-acts reveal d3">
+                <button class="btn-hm">ارفع Case الآن ←</button>
+                <button class="btn-hg">شاهد أعمالنا</button>
+            </div>
+            <div class="hero-nums reveal d4">
+                <div><div class="hn-val">+<span>500</span></div><div class="hn-label">Case مكتمل</div></div>
+                <div><div class="hn-val"><span>24</span>س</div><div class="hn-label">وقت التسليم</div></div>
+                <div><div class="hn-val"><span>98</span>%</div><div class="hn-label">رضا العملاء</div></div>
+            </div>
+        </div>
+        <div class="hero-right">
+            <canvas id="toothCanvas"></canvas>
+            <div class="floating-cards">
+                <div class="mini-card mc1">
+                    <div class="mc-top"><span class="mc-ico">⚡</span><span class="mc-lbl">آخر Case مكتملة</span></div>
+                    <div class="mc-val" style="color:var(--amber)">د. العنزي</div>
+                </div>
+                <div class="mini-card mc2">
+                    <div class="mc-top"><span class="mc-ico">🦷</span><span class="mc-lbl">قيد التصميم</span></div>
+                    <div class="mc-val" style="color:#8B7CF6">Implant Crown</div>
+                </div>
+                <div class="main-card" id="mainCard">
+                    <div class="ct"><div class="cb">WaveCAD</div><div class="lt"><div class="ld"></div>مباشر</div></div>
+                    <div class="oi"><div class="oic oic-a">👑</div><div class="oi-info"><div class="oin">د. خالد الغامدي</div><div class="oit">Zirconia Crown — ٣٦</div></div><div class="oib ib-a">مكتمل ✓</div><div class="oip">٢٠ ر.س</div></div>
+                    <div class="oi"><div class="oic oic-v">✨</div><div class="oi-info"><div class="oin">معمل البيان</div><div class="oit">Wax-up — Full Mouth</div></div><div class="oib ib-v">جارٍ ⏳</div><div class="oip">١٥ ر.س</div></div>
+                    <div class="oi"><div class="oic oic-r">🔩</div><div class="oi-info"><div class="oin">د. نورة السالم</div><div class="oit">Implant Crown — ٤٦</div></div><div class="oib ib-r">جديد</div><div class="oip">٢٥ ر.س</div></div>
+                    <div class="cfoot"><div class="cfe">تصاميم اليوم</div><div class="cfa">٦٠ ر.س ↑</div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="services">
+        <div class="sec-tag reveal">خدماتنا</div>
+        <h2 class="sec-title reveal">كل ما تحتاجه<br>في مكان واحد</h2>
+        <p class="sec-sub reveal">تصاميم دقيقة جاهزة للميلينق والطباعة — نسلم في 24 ساعة أو أقل</p>
+        <div class="srv-grid">
+            <div class="sc reveal"><div class="sc-num">01</div><span class="sc-ico">👑</span><div class="sc-name">Crown & Bridge</div><div class="sc-desc">تيجان وجسور Zirconia, e.max, PMMA بمعايرة كاملة للإطباق والخلوص.</div><div class="sc-bot"><div class="sc-price">٢٠ ر.س <small>/ وحدة</small></div><div class="sa">←</div></div></div>
+            <div class="sc reveal"><div class="sc-num">02</div><span class="sc-ico">🔩</span><div class="sc-name">Implant Crown</div><div class="sc-desc">تيجان زرعات مسمارية (Screw-retained) وأبتمنت مخصص. ندعم ملفات CBCT وSurgical Guide.</div><div class="sc-bot"><div class="sc-price">٢٥ ر.س <small>/ وحدة</small></div><div class="sa">←</div></div></div>
+            <div class="sc reveal"><div class="sc-num">03</div><span class="sc-ico">✨</span><div class="sc-name">Wax-up & Smile Design</div><div class="sc-desc">محاكاة رقمية للشكل النهائي مع تحليل الابتسامة ثلاثي الأبعاد.</div><div class="sc-bot"><div class="sc-price">١٥ ر.س <small>/ وحدة</small></div><div class="sa">←</div></div></div>
+            <div class="sc reveal"><div class="sc-num">04</div><span class="sc-ico">💎</span><div class="sc-name">Full Arch</div><div class="sc-desc">All-on-4, All-on-6 وتصميم الفك الكامل بدقة ميلينج.</div><div class="sc-bot"><div class="sc-price">حسب الحالة</div><div class="sa">←</div></div></div>
+            <div class="sc reveal"><div class="sc-num">05</div><span class="sc-ico">🎯</span><div class="sc-name">جلسة مراجعة عن بُعد</div><div class="sc-desc">مشاركة شاشة مباشرة على Exocad أو Blue Sky Bio لمراجعة الحالات المعقدة.</div><div class="sc-bot"><div class="sc-price">مجاناً</div><div class="sa">←</div></div></div>
+            <div class="sc reveal"><div class="sc-num">06</div><span class="sc-ico">📁</span><div class="sc-name">تحويل CBCT لدليل جراحي</div><div class="sc-desc">استقبال ملفات DICOM وتصدير Surgical Guide جاهز للطباعة ثلاثية الأبعاد.</div><div class="sc-bot"><div class="sc-price">حسب الحالة</div><div class="sa">←</div></div></div>
+        </div>
+    </section>
+
+    <section class="how" id="how">
+        <div class="sec-tag reveal">كيف يعمل</div>
+        <h2 class="sec-title reveal">من الـ Case<br>للتصميم النهائي</h2>
+        <p class="sec-sub reveal">٤ خطوات بسيطة وتصميمك جاهز خلال ٢٤ ساعة</p>
+        <div class="how-grid">
+            <div>
+                <div class="hs reveal d1"><div class="hsn">١</div><div><div class="hst">سجّل وارفع الـ Case</div><div class="hsd">أنشئ حسابك وارفع ملفات STL والوصفة مباشرة من الداشبورد</div></div></div>
+                <div class="hs reveal d2"><div class="hsn">٢</div><div><div class="hst">المراجعة والتأكيد</div><div class="hsd">نراجع الـ Case ونتواصل معك على الواتساب لتأكيد التفاصيل</div></div></div>
+                <div class="hs reveal d3"><div class="hsn">٣</div><div><div class="hst">التصميم والمناقشة</div><div class="hsd">نصمم ونشاركك المعاينة — وإن احتجت ميتينغ أونلاين نشارك الشاشة سوياً</div></div></div>
+                <div class="hs reveal d4"><div class="hsn">٤</div><div><div class="hst">استلم الملف النهائي</div><div class="hsd">تحميل مباشر لملفات STL جاهزة للميلينق أو الطباعة خلال ٢٤ ساعة</div></div></div>
+            </div>
+            <div class="how-vis reveal d2">
+                <div class="tl-lbl">LIVE CASE TRACKER</div>
+                <div>
+                    <div class="tli"><div class="tldw"><div class="tld td-a"></div><div class="tll"></div></div><div class="tlc"><div class="tlct"><div class="tlcti">الـ Case مستلَم ✓</div><div class="tlctm">٩:٠٠ ص</div></div><div class="tlcd">د. خالد — Crown ٣٦ — الملفات جاهزة</div></div></div>
+                    <div class="tli"><div class="tldw"><div class="tld td-v"></div><div class="tll"></div></div><div class="tlc"><div class="tlct"><div class="tlcti">قيد التصميم ⚡</div><div class="tlctm">١٠:٣٠ ص</div></div></div></div>
+                    <div class="tli"><div class="tldw"><div class="tld td-r"></div><div class="tll"></div></div><div class="tlc"><div class="tlct"><div class="tlcti">في المراجعة</div><div class="tlctm">١٢:٤٥ م</div></div></div></div>
+                    <div class="tli"><div class="tldw"><div class="tld td-g"></div></div><div class="tlc"><div class="tlct"><div class="tlcti" style="color:var(--gray)">التسليم النهائي</div><div class="tlctm" style="color:var(--gray)">متوقع ٢م</div></div></div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="pricing">
+        <div class="sec-tag reveal">الأسعار</div>
+        <h2 class="sec-title reveal">شفاف وبلا مفاجآت</h2>
+        <p class="sec-sub reveal">ادفع فقط على التصميم اللي تحتاجه — السعر ثابت لكل وحدة</p>
+        <div class="price-grid">
+            <div class="pc reveal d1">
+                <span class="pc-ico">👑</span>
+                <div class="pc-name">Crown & Bridge</div>
+                <div class="pc-desc">تيجان وجسور متعددة الوحدات جاهزة للميلينق</div>
+                <div class="pc-price-row"><div class="pc-price">٢٠<sub> ر.س</sub></div></div>
+                <div class="pc-note">لكل وحدة</div>
+                <div class="pc-div"></div>
+                <ul class="pc-fl">
+                    <li><span class="pfc">✓</span> جميع المواد (Zirconia, e.max, PMMA)</li>
+                    <li><span class="pfc">✓</span> تسليم خلال ٢٤ ساعة</li>
+                    <li><span class="pfc">✓</span> مراجعة مجانية</li>
+                    <li><span class="pfc">✓</span> تواصل مباشر واتساب</li>
+                </ul>
+                <button class="btn-pc btn-pcg">اطلب الآن</button>
+            </div>
+            <div class="pc pc-feat reveal d2">
+                <span class="pc-ico">🔩</span>
+                <div class="pc-name">Implant Crown</div>
+                <div class="pc-desc">تيجان زرعات مع جميع أنواع الأبتمنت</div>
+                <div class="pc-price-row"><div class="pc-price">٢٥<sub> ر.س</sub></div></div>
+                <div class="pc-note">لكل وحدة</div>
+                <div class="pc-div"></div>
+                <ul class="pc-fl">
+                    <li><span class="pfc">✓</span> Custom & Stock Abutments</li>
+                    <li><span class="pfc">✓</span> Screw-retained جاهزة</li>
+                    <li><span class="pfc">✓</span> دعم ملفات CBCT</li>
+                    <li><span class="pfc">✓</span> ميتينغ مراجعة عند الحاجة</li>
+                </ul>
+                <button class="btn-pc btn-pca">اطلب الآن</button>
+            </div>
+            <div class="pc reveal d3">
+                <span class="pc-ico">✨</span>
+                <div class="pc-name">Wax-up Design</div>
+                <div class="pc-desc">محاكاة رقمية للشكل النهائي وإطباق مثالي</div>
+                <div class="pc-price-row"><div class="pc-price">١٥<sub> ر.س</sub></div></div>
+                <div class="pc-note">لكل وحدة</div>
+                <div class="pc-div"></div>
+                <ul class="pc-fl">
+                    <li><span class="pfc">✓</span> مثالي للحالات التجميلية</li>
+                    <li><span class="pfc">✓</span> محاكاة ثلاثية الأبعاد</li>
+                    <li><span class="pfc">✓</span> تسليم خلال ٢٤ ساعة</li>
+                    <li><span class="pfc">✓</span> مناقشة قبل وبعد التصميم</li>
+                </ul>
+                <button class="btn-pc btn-pcg">اطلب الآن</button>
+            </div>
+        </div>
+    </section>
+
+    <div class="cta-sec reveal" id="contact">
+        <h2 class="cta-h">جاهز ترفع<br><span class="h1-grad">أول Case لك؟</span></h2>
+        <p class="cta-sub">سجّل الآن — أول تصميم بسعر خاص<br>وفريق WaveCAD معك من البداية للنهاية</p>
+        <div class="cta-btns">
+            <button class="btn-hm">ابدأ الآن ←</button>
+            <button class="btn-hg">تواصل عبر واتساب 📱</button>
+        </div>
+    </div>
+
+    <footer>
+        <div class="ft">
+            <div class="fb">
+                <a href="#" class="logo">
+                    <div class="logo-mark" style="width:36px;height:36px">
+                        <svg viewBox="0 0 44 44" fill="none">
+                            <rect width="44" height="44" rx="12" fill="rgba(0,119,182,0.06)"/>
+                            <rect width="44" height="44" rx="12" stroke="rgba(0,119,182,0.2)" stroke-width="1"/>
+                            <path d="M10 14 L16 28 L22 19 L28 28 L34 14" stroke="url(#waveGrad4b)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                            <circle cx="22" cy="28" r="2" fill="#00B4D8"/>
+                            <defs>
+                                <linearGradient id="waveGrad4b" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#0077B6"/>
+                                    <stop offset="100%" stop-color="#6C5CE7"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div class="logo-text" style="font-size:20px">Wave<span>CAD</span></div>
+                </a>
+                <p>منصة تصميم أسنان احترافية عن بُعد — متخصصون في exocad وبرامج الزرعات. ادفع فقط على التصاميم اللي تحتاجها، متى ما احتجتها.</p>
+            </div>
+            <div class="fc"><h4>الخدمات</h4><a href="#">Crown & Bridge</a><a href="#">Implant Crown</a><a href="#">Wax-up</a><a href="#">Smile Design</a><a href="#">Full Arch</a></div>
+            <div class="fc"><h4>الشركة</h4><a href="#">من نحن</a><a href="#">أعمالنا</a><a href="#">الأسعار</a><a href="#">المدونة</a></div>
+            <div class="fc"><h4>تواصل</h4><a href="#">واتساب</a><a href="#">الإيميل</a><a href="#">انستقرام</a><a href="#">سياسة الخصوصية</a></div>
+        </div>
+        <div class="fb2">
+            <div class="fcp">© 2025 WaveCAD — جميع الحقوق محفوظة</div>
+            <div class="fw">WaveCAD ∿</div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // ============ 1. المؤشر المخصص ============
+        const cursor = document.getElementById('cursor');
+        const ring = document.getElementById('cursorRing');
+        let mx = 0, my = 0, rx = 0, ry = 0;
+        document.addEventListener('mousemove', e => {
+            mx = e.clientX;
+            my = e.clientY;
+            cursor.style.left = mx - 6 + 'px';
+            cursor.style.top = my - 6 + 'px';
+        });
+        (function animRing() {
+            rx += (mx - rx - 19) * 0.12;
+            ry += (my - ry - 19) * 0.12;
+            ring.style.left = rx + 'px';
+            ring.style.top = ry + 'px';
+            requestAnimationFrame(animRing);
+        })();
+
+        document.querySelectorAll('button, a, .sc, .oi, .pc').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursor.style.transform = 'scale(2.2)';
+                ring.style.transform = 'scale(1.6)';
+                ring.style.borderColor = 'rgba(0,119,182,0.8)';
+            });
+            el.addEventListener('mouseleave', () => {
+                cursor.style.transform = 'scale(1)';
+                ring.style.transform = 'scale(1)';
+                ring.style.borderColor = 'rgba(0,119,182,0.45)';
+            });
+        });
+
+        // ============ 2. تأثير ميلان البطاقة الرئيسية ============
+        const mainCard = document.getElementById('mainCard');
+        if (mainCard) {
+            mainCard.addEventListener('mousemove', (e) => {
+                const rect = mainCard.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = (y - centerY) / 10;
+                const rotateY = (x - centerX) / -10;
+                mainCard.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
+            mainCard.addEventListener('mouseleave', () => {
+                mainCard.style.transform = 'perspective(800px) rotateX(0) rotateY(0)';
+            });
+        }
+
+        // ============ 3. تأثير الظهور أثناء التمرير ============
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.15 });
+        document.querySelectorAll('.reveal').forEach(r => observer.observe(r));
+        document.querySelectorAll('.hero .reveal').forEach(el => el.classList.add('visible'));
+
+        // ============ 4. تصغير النافبار عند التمرير ============
+        window.addEventListener('scroll', () => {
+            document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+        });
+
+        // ============ 5. قائمة الجوال ============
+        const hamburger = document.getElementById('hamburger');
+        const mobileMenu = document.getElementById('mobileMenu');
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+        });
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                hamburger.classList.remove('active');
+                mobileMenu.classList.remove('active');
+            });
+        });
+
+        // ============ 6. خلفية الجزيئات ============
+        const pCanvas = document.getElementById('particlesCanvas');
+        const pCtx = pCanvas.getContext('2d');
+        let particles = [];
+        function resizeParticles() {
+            pCanvas.width = window.innerWidth;
+            pCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeParticles);
+        resizeParticles();
+
+        class Particle {
+            constructor() {
+                this.reset();
+                this.y = Math.random() * pCanvas.height;
+            }
+            reset() {
+                this.x = Math.random() * pCanvas.width;
+                this.y = -10;
+                this.size = Math.random() * 1.5 + 0.5;
+                this.speed = Math.random() * 0.5 + 0.2;
+                this.opacity = Math.random() * 0.6 + 0.2;
+            }
+            update() {
+                this.y += this.speed;
+                if (this.y > pCanvas.height + 10) this.reset();
+            }
+            draw() {
+                pCtx.beginPath();
+                pCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                pCtx.fillStyle = `rgba(0,180,216,${this.opacity})`;
+                pCtx.fill();
+            }
+        }
+        for (let i = 0; i < 70; i++) particles.push(new Particle());
+        function animateParticles() {
+            pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // ============ 7. السن ثلاثي الأبعاد ============
+        const toothCanvas = document.getElementById('toothCanvas');
+        if (toothCanvas && window.innerWidth > 1024) {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, toothCanvas.clientWidth / toothCanvas.clientHeight, 0.1, 100);
+            camera.position.set(2, 1.5, 3.5);
+            camera.lookAt(0, 0, 0);
+
+            const renderer = new THREE.WebGLRenderer({ canvas: toothCanvas, alpha: true, antialias: true });
+            renderer.setSize(toothCanvas.clientWidth, toothCanvas.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            const ambientLight = new THREE.AmbientLight(0x0077B6, 0.4);
+            scene.add(ambientLight);
+            const pointLight1 = new THREE.PointLight(0x0077B6, 1, 10);
+            pointLight1.position.set(2, 3, 3);
+            scene.add(pointLight1);
+            const pointLight2 = new THREE.PointLight(0x00B4D8, 0.6, 8);
+            pointLight2.position.set(-2, -1, -1);
+            scene.add(pointLight2);
+
+            const points = [];
+            for (let i = 0; i <= 1; i += 0.05) {
+                let x, y;
+                if (i < 0.3) {
+                    x = 0.15 + 0.1 * i;
+                    y = -i * 1.5;
+                } else if (i < 0.7) {
+                    x = 0.35 + 0.1 * Math.sin((i - 0.3) * Math.PI * 2.5);
+                    y = -0.45 + (i - 0.3) * 1.8;
+                } else {
+                    x = 0.5 - 0.15 * (i - 0.7) * 3;
+                    y = 0.7 + (i - 0.7) * 1.2;
+                }
+                points.push(new THREE.Vector2(x, y));
+            }
+            const toothGeometry = new THREE.LatheGeometry(points, 32);
+            const toothMaterial = new THREE.MeshStandardMaterial({
+                color: 0x00A3FF,
+                roughness: 0.2,
+                metalness: 0.1,
+                emissive: new THREE.Color(0x001122),
+                transparent: true,
+                opacity: 0.9
+            });
+            const tooth = new THREE.Mesh(toothGeometry, toothMaterial);
+            scene.add(tooth);
+
+            const wireframeMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00B4D8,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.15
+            });
+            const wireframeTooth = new THREE.Mesh(toothGeometry, wireframeMaterial);
+            scene.add(wireframeTooth);
+
+            function animateTooth() {
+                requestAnimationFrame(animateTooth);
+                tooth.rotation.y += 0.005;
+                wireframeTooth.rotation.y += 0.005;
+                tooth.rotation.x = Math.sin(Date.now() * 0.001) * 0.1;
+                wireframeTooth.rotation.x = tooth.rotation.x;
+                renderer.render(scene, camera);
+            }
+            animateTooth();
+
+            window.addEventListener('resize', () => {
+                if (toothCanvas.parentElement) {
+                    renderer.setSize(toothCanvas.parentElement.clientWidth, toothCanvas.parentElement.clientHeight);
+                    camera.aspect = toothCanvas.parentElement.clientWidth / toothCanvas.parentElement.clientHeight;
+                    camera.updateProjectionMatrix();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
